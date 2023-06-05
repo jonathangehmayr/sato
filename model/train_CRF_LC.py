@@ -16,7 +16,8 @@ import torch.optim as optim
 from torch.utils.data import ConcatDataset
 from sklearn.preprocessing import LabelEncoder
 
-from model import models_sherlock, datasets
+#from model import models_sherlock, datasets
+import models_sherlock, datasets
 
 from tensorboardX import SummaryWriter
 from sklearn.metrics import classification_report
@@ -24,7 +25,12 @@ import itertools
 from torchcrf import CRF
 import configargparse
 import copy
+# setting path
+sys.path.append('../')
 from utils import get_valid_types, str2bool, str_or_none, name2dic
+sys.path.append('/model')
+# setting path
+#sys.path.append('../parentdirectory')
 
 
 #################### 

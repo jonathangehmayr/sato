@@ -1,4 +1,4 @@
-cd $BASEPATH
+#cd $BASEPATH
 
 data_URL="http://sato-data.s3.amazonaws.com"
 

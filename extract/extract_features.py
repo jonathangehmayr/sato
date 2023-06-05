@@ -14,8 +14,12 @@ from tqdm import tqdm
 import functools
 
 from helpers.read_raw_data import get_filtered_dfs_by_corpus
-from utils import get_valid_types, str_or_none, str2bool
 from helpers.utils import valid_header_iter_gen, count_length_gen
+
+sys.path.append('../')
+from utils import get_valid_types, str_or_none, str2bool
+sys.path.append('/scripts')
+
 # Get rid of gensim deprecated warning
 if not sys.warnoptions:
     import warnings
@@ -78,9 +82,9 @@ if __name__ == "__main__":
     header_name =  "{}_{}_header_valid.csv".format(corpus, TYPENAME)
     header_iter = valid_header_iter_gen(header_name)
     
+    
 
-
- 
+    # raw_df_iter generator function that yields raw dfs
     if corpus.startswith('webtables'):
         wcorpus, partition = corpus.split('-')
         raw_df_iter = get_filtered_dfs_by_corpus['webtables'](wcorpus, header_iter)
@@ -117,7 +121,7 @@ if __name__ == "__main__":
             cache = []
 
     #save the last cache
-    if len(cache) > 0:
+    if len(cache) > 0: 
         df = pd.concat(cache)
         df.to_csv(output_file, header=header, index=False, mode=mode)
 

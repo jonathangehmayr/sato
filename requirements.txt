@@ -12,9 +12,9 @@ decorator==4.4.0
 docutils==0.14
 Flask==1.0.3
 gast==0.2.2
-gensim==3.7.3
+#gensim==3.7.3
 grpcio==1.21.1
-h5py==2.9.0
+#h5py==2.9.0
 idna==2.8
 ipykernel==5.1.1
 ipython==7.5.0
@@ -34,7 +34,7 @@ MarkupSafe==1.1.1
 mock==3.0.5
 nltk==3.4.1
 numpy==1.16.4
-pandas==0.24.2
+#pandas==0.24.2
 parso==0.4.0
 pexpect==4.7.0
 pickleshare==0.7.5
@@ -54,8 +54,8 @@ six==1.12.0
 sklearn==0.0
 smart-open==1.8.3
 tensorboard==1.13.1
-tensorflow==1.13.1
-tensorflow-estimator==1.13.0
+#tensorflow==1.13.1
+#tensorflow-estimator==1.13.0
 termcolor==1.1.0
 tornado==6.0.2
 traitlets==4.3.2
@@ -64,5 +64,5 @@ wcwidth==0.1.7
 Werkzeug==0.15.4
 ConfigArgParse==0.14.0
 tqdm==4.34.0
-torch==1.2.0
-tensorboardX==1.8
+#torch==1.2.0
+#tensorboardX==1.8

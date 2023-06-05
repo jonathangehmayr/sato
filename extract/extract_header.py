@@ -22,7 +22,11 @@ from collections import OrderedDict
 import itertools
 from helpers.utils import canonical_header, long_name_digest
 from tqdm import tqdm
+
+
+sys.path.append('../')
 from utils import get_valid_types, str_or_none, str2bool
+sys.path.append('/scripts')
 
 from helpers.read_raw_data import get_dfs_by_corpus
 

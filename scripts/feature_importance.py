@@ -7,7 +7,7 @@ import json
 import sys
 import datetime
 import configargparse
-from utils import str2bool, str_or_none, name2dic, get_valid_types
+
 import copy
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
@@ -25,6 +25,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import ConcatDataset
+
+sys.path.append('../')
+from utils import str2bool, str_or_none, name2dic, get_valid_types
+sys.path.append('/scripts')
+
 
 
 def eval_batch_col(classifier, val_dataset, batch_size, device):
@@ -46,7 +51,7 @@ def eval_batch_col(classifier, val_dataset, batch_size, device):
         y_true.extend(y.cpu().numpy())
 
     
-    report = classification_report(y_true, np.argmax(y_pred, axis=1), output_dict=True)
+    report = classification_report(y_true, np.argmax(y_pred, axis=1), output_dict=True, zero_division=1)
     return report
 
 # evaluate and return prediction & true labels of a table batch

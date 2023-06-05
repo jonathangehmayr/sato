@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import sys
 import pickle
 import numpy as np
 import pandas as pd
@@ -8,11 +9,14 @@ from typing import List, Dict, Any
 from sklearn.preprocessing import LabelEncoder
 import torch.nn.functional as F
 from os.path import join
-from utils import  name2dic, get_valid_types, load_tmp_df
+
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+sys.path.append('../')
+from utils import  name2dic, get_valid_types, load_tmp_df
+sys.path.append('/model')
 
 # global dataset settings
 EMBEDDING_FILL= 0.0

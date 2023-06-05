@@ -3,8 +3,10 @@ import numpy as np
 from sklearn.metrics import classification_report
 import pandas as pd
 import os
+import json
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-#import seaborn as sns
 
 
 
@@ -21,7 +23,7 @@ def get_predictions(path):
 def report_gen(y_pred, y_true, report_name=None, out_loc=join(os.environ['BASEPATH'], 'results', 'report')):
     # given predicted and true labels, 
     # generate the overall results and pertype analysis with misclassification
-    report = classification_report(y_true, y_pred, output_dict=True)
+    report = classification_report(y_true, y_pred, output_dict=True, zero_division=1)
 
     df_report = pd.DataFrame(columns=['type', 'precision', 'recall','f1-score', 'support'])
 
@@ -29,7 +31,10 @@ def report_gen(y_pred, y_true, report_name=None, out_loc=join(os.environ['BASEPA
     for t in report:
         if t not in ['accuracy','macro avg','weighted avg']:
             report[t]['type']=t
-            df_report= df_report.append(report[t], ignore_index=True)
+            dic=report[t]
+            dic["type"]=t
+            dic={k:[v] for k,v in dic.items()}
+            df_report= pd.concat([df_report,pd.DataFrame(dic)], ignore_index=True)
         else:
             overall[t] = report[t]
 
