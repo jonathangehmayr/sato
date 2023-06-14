@@ -378,6 +378,14 @@ def get_webtables_filterd_dfs(corpus, header_iter, exact_num_fields=None, min_fi
     if df is not None:
         yield df
 
+    """
+    df should be result
+    result = {
+        'df': df,
+        'dataset_id': dataset_id,
+        'locator': locator
+    }
+    """
 
     for header_line in header_iter:
         if header_line =='EOF':

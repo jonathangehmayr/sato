@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     sherlock_feature_groups = args.sherlock_feature_groups
     topic_name = args.topic
-
+    #topic = 'thr-0_num-directstr_features'
     corpus_list = args.corpus_list
     
 
@@ -200,7 +200,13 @@ if __name__ == "__main__":
 
     start_time = time()
 
-    classifier = build_sherlock(sherlock_feature_groups, num_classes=len(valid_types), topic_dim=topic_dim, dropout_ratio=dropout_ratio).to(device)
+    classifier = build_sherlock(
+        sherlock_feature_groups,
+        num_classes=len(valid_types),
+        topic_dim=topic_dim,
+        dropout_ratio=dropout_ratio
+        ).to(device)
+    
     loss_func = nn.CrossEntropyLoss().to(device)
 
     if args.mode == 'train':

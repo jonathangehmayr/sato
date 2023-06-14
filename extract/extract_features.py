@@ -82,7 +82,7 @@ if __name__ == "__main__":
     header_name =  "{}_{}_header_valid.csv".format(corpus, TYPENAME)
     header_iter = valid_header_iter_gen(header_name)
     
-    
+    #header_iter yields rows of valid columns and rows in a dataframe
 
     # raw_df_iter generator function that yields raw dfs
     if corpus.startswith('webtables'):
@@ -92,7 +92,6 @@ if __name__ == "__main__":
         if '-' in corpus:
             corpus= corpus.split('-')[0]
         raw_df_iter = get_filtered_dfs_by_corpus[corpus](header_iter)
-
 
 
     header_length = count_length_gen(os.path.join(valid_header_dir, header_name)) - 1
