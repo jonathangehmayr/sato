@@ -198,6 +198,7 @@ time_record = {}
 ####################
 
 # evaluate and return prediction & true labels of a table batch
+# 
 def eval_batch(table_batch, label_batch, mask_batch):
     # reshap (table_batch * table_size * features)
     for f_g in table_batch:
