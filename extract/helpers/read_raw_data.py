@@ -468,18 +468,80 @@ def get_plotly_filtered_dfs(header_iter, limit=None, exact_num_fields=None, min_
                 else:
                     return
 
+def load_atd(full_file_path, locator, dataset_id, exact_num_fields, min_fields, max_fields, fields):
+    pass
+
+def get_atd_dfs():
+    pass
+
+def get_atd_filtered_dfs(header_iter, exact_num_fields=None, min_fields=None, max_fields=None):
+    corpus='atd'
+    base_dir = data_dirs[corpus]
+
+    for next_line in header_iter:
+        if next_line == 'EOF':
+            return
+        idx, row = next_line
+        locator = row['locator']
+        fields = eval(row['field_list']) #convert string to list
+        full_file_path = join(base_dir, locator)
+        dataset_id = locator.split('/')[-1]
+
+        df = load_atd(full_file_path, locator, dataset_id, exact_num_fields, min_fields, max_fields, fields)
+        if df:
+            yield df 
+        else:
+            continue
+
+
+def load_manyeyes(full_file_path, locator, dataset_id, exact_num_fields=None, min_fields=None, max_fields=None, valid_fields=None):
+    try:
+        df = pd.read_csv(
+            full_file_path,
+            error_bad_lines=False,
+            warn_bad_lines=False,
+            sep='\t',
+            encoding='utf-8'
+        )
+
+        num_fields = len(df.columns)
+
+        # If specified, only return the valid fields
+        if valid_fields is not None:
+            df = df.iloc[:,valid_fields]
+
+        if exact_num_fields:
+            if num_fields != exact_num_fields: return
+        if min_fields:
+            if num_fields < min_fields: return
+        if max_fields:
+            if num_fields > max_fields: return
+
+        result = {
+            'df': df,
+            'dataset_id': dataset_id,
+            'locator': locator
+        }
+        return result
+
+    except Exception as e:
+        #print("Exception loading manyeyes data", e)
+        return
+
 
 
 get_dfs_by_corpus = {
     'plotly': get_plotly_dfs,
     'manyeyes': get_manyeyes_dfs,
     'webtables': get_webtables_dfs,
-    'opendata': get_opendata_dfs
+    'opendata': get_opendata_dfs,
+    'atd': get_atd_dfs
 }
 
 get_filtered_dfs_by_corpus = {
     'plotly': get_plotly_filtered_dfs,
     'manyeyes': get_manyeyes_filtered_dfs,
     'webtables': get_webtables_filterd_dfs,
-    'opendata': get_opendata_filtered_dfs
+    'opendata': get_opendata_filtered_dfs,
+    'atd': get_atd_filtered_dfs
 }

@@ -43,7 +43,7 @@ TYPENAME = os.environ['TYPENAME']
 valid_types = get_valid_types(TYPENAME)
 
 
-
+# needs to be rewritten so that 
 def get_valid_headers(df_iter):
     for df_dic in df_iter:
         df, locator, dataset_id = df_dic['df'], df_dic['locator'], df_dic['dataset_id']

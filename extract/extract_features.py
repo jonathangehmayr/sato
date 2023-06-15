@@ -27,6 +27,7 @@ if not sys.warnoptions:
 
 TYPENAME = os.environ['TYPENAME']
 valid_types = get_valid_types(TYPENAME)
+
 valid_header_dir = os.path.join(os.environ['BASEPATH'], 'extract', 'out', 'headers', TYPENAME)
 
 
