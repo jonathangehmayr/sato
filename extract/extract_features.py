@@ -39,14 +39,14 @@ if __name__ == "__main__":
 
     # Get corpus
     parser = argparse.ArgumentParser()
-    parser.add_argument('corpus_chunk', type=str)
-    parser.add_argument('-f', '--features', type=str, nargs='?', default='sherlock', choices=['sherlock', 'topic'])
-    parser.add_argument('-LDA', '--LDA_name', nargs='?', type=str_or_none, default=None)
-    parser.add_argument('-n', '--num_processes', nargs='?', type=int, default=4)
-    parser.add_argument('-o', '--overwrite', nargs='?', type=str2bool, default=False)
+    parser.add_argument('--corpus', default='atd', type=str, required=False)
+    parser.add_argument('-f', '--features', type=str, nargs='?', default='sherlock', choices=['sherlock', 'topic'], required=False)
+    parser.add_argument('-LDA', '--LDA_name', nargs='?', type=str_or_none, default="num-directstr_thr-0_tn-400", required=False)
+    parser.add_argument('-n', '--num_processes', nargs='?', type=int, default=4, required=False)
+    parser.add_argument('-o', '--overwrite', nargs='?', type=str2bool, default=True, required=False)
 
     args = parser.parse_args()
-    corpus = args.corpus_chunk
+    corpus = args.corpus
 
     # Create features directory
     features_dir = join(os.environ['BASEPATH'], 'extract', 'out', 'features', TYPENAME)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if not args.overwrite:
         assert not os.path.isfile(output_file), "\n {} already exists".format(output_file)
 
-    header_name =  "{}_{}_header_valid.csv".format(corpus, TYPENAME)
+    header_name =  "{}_p{}_{}_header_valid.csv".format(corpus, 1,TYPENAME)
     header_iter = valid_header_iter_gen(header_name)
     
     #header_iter yields rows of valid columns and rows in a dataframe
@@ -90,8 +90,6 @@ if __name__ == "__main__":
         wcorpus, partition = corpus.split('-')
         raw_df_iter = get_filtered_dfs_by_corpus['webtables'](wcorpus, header_iter)
     else:
-        if '-' in corpus:
-            corpus= corpus.split('-')[0]
         raw_df_iter = get_filtered_dfs_by_corpus[corpus](header_iter)
 
 
@@ -108,19 +106,23 @@ if __name__ == "__main__":
     header, mode = True, 'w'
     col_counter = 0
     cache = []
+    os.chdir('../automatic-task-discovery')
     for df_features in tqdm(task_pool.imap(extract_func, raw_df_iter), 
                             total=header_length,
                             desc='{} processes'.format(args.num_processes)):
         counter += 1
         cache.append(df_features)
         if counter % cache_size == 0:
+            os.chdir("../sato")
             df = pd.concat(cache)
             df.to_csv(output_file, header=header, index=False, mode=mode)
             col_counter += len(df)
             header, mode = False, 'a'
             cache = []
+        os.chdir('../automatic-task-discovery')
 
     #save the last cache
+    os.chdir("../sato")
     if len(cache) > 0: 
         df = pd.concat(cache)
         df.to_csv(output_file, header=header, index=False, mode=mode)

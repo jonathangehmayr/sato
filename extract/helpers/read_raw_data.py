@@ -15,6 +15,7 @@ from collections import OrderedDict
 import argparse
 import gzip
 import json
+import sys
 import chardet
 import traceback
 import itertools
@@ -22,6 +23,7 @@ import numpy as np
 import pandas as pd
 from .general_helpers import clean_chunk
 from .type_detection import detect_field_type, data_type_to_general_type, data_types, general_types
+
 
 raw_data_dir = os.environ['RAW_DIR']
 CHUNK_SIZE = 500
@@ -468,65 +470,69 @@ def get_plotly_filtered_dfs(header_iter, limit=None, exact_num_fields=None, min_
                 else:
                     return
 
-def load_atd(full_file_path, locator, dataset_id, exact_num_fields, min_fields, max_fields, fields):
-    pass
+
+
 
 def get_atd_dfs():
-    pass
+    os.chdir('../automatic-task-discovery')
+    sys.path.append('../automatic-task-discovery')
+    from src import load_metadata, process_csv_file_sato
 
-def get_atd_filtered_dfs(header_iter, exact_num_fields=None, min_fields=None, max_fields=None):
-    corpus='atd'
-    base_dir = data_dirs[corpus]
+    # get current working directory
+    cwd = os.getcwd()
+    # change to the directory of the script
+    os.chdir('../automatic-task-discovery')
 
-    for next_line in header_iter:
-        if next_line == 'EOF':
-            return
-        idx, row = next_line
-        locator = row['locator']
-        fields = eval(row['field_list']) #convert string to list
-        full_file_path = join(base_dir, locator)
-        dataset_id = locator.split('/')[-1]
-
-        df = load_atd(full_file_path, locator, dataset_id, exact_num_fields, min_fields, max_fields, fields)
-        if df:
-            yield df 
-        else:
+    cwd = os.getcwd()
+    read_path_csv="csv_data_full/"
+    dict_metadata=load_metadata()
+    for idx, (key, value) in enumerate(dict_metadata.items()):
+        print(idx,key)
+        # check that dataset is not eda only
+        with open("data/labels/" + key + ".json") as f:
+            dict_file=json.load(f)
+        if dict_file["eda_only"]==1:
             continue
-
-
-def load_manyeyes(full_file_path, locator, dataset_id, exact_num_fields=None, min_fields=None, max_fields=None, valid_fields=None):
-    try:
-        df = pd.read_csv(
-            full_file_path,
-            error_bad_lines=False,
-            warn_bad_lines=False,
-            sep='\t',
-            encoding='utf-8'
-        )
-
-        num_fields = len(df.columns)
-
-        # If specified, only return the valid fields
-        if valid_fields is not None:
-            df = df.iloc[:,valid_fields]
-
-        if exact_num_fields:
-            if num_fields != exact_num_fields: return
-        if min_fields:
-            if num_fields < min_fields: return
-        if max_fields:
-            if num_fields > max_fields: return
+        
+        folder_name=key
+        df=process_csv_file_sato(read_path_csv, folder_name)
 
         result = {
             'df': df,
-            'dataset_id': dataset_id,
-            'locator': locator
+            'dataset_id': folder_name,
+            'locator': "no locator"
         }
-        return result
+        yield result
 
-    except Exception as e:
-        #print("Exception loading manyeyes data", e)
-        return
+def get_atd_dfs_header():
+    
+    sys.path.append('../automatic-task-discovery')
+    from src import load_metadata, process_csv_file_sato, convert_labels_to_sato_format
+
+    read_path_csv="csv_data_full/"
+    dict_metadata=load_metadata()
+    for idx, (key, value) in enumerate(dict_metadata.items()):
+        print(idx,key)
+        # check that dataset is not eda only
+        print(os.getcwd())
+        with open("data/labels/" + key + ".json") as f:
+            dict_file=json.load(f)
+        if dict_file["eda_only"]==1:
+            continue
+        
+        folder_name=key
+        df=process_csv_file_sato(read_path_csv, folder_name)
+        variables=[variable for variable in list(value["variables"].keys()) if not "Unnamed" in variable] + ["root"]
+        labels=convert_labels_to_sato_format(folder_name + ".json", variables)
+
+        result = {
+            'df': df,
+            'dataset_id': folder_name,
+            'locator': "no locator",
+            'labels': labels,
+        }
+    
+        yield result
 
 
 
@@ -535,7 +541,7 @@ get_dfs_by_corpus = {
     'manyeyes': get_manyeyes_dfs,
     'webtables': get_webtables_dfs,
     'opendata': get_opendata_dfs,
-    'atd': get_atd_dfs
+    'atd': get_atd_dfs_header
 }
 
 get_filtered_dfs_by_corpus = {
@@ -543,5 +549,5 @@ get_filtered_dfs_by_corpus = {
     'manyeyes': get_manyeyes_filtered_dfs,
     'webtables': get_webtables_filterd_dfs,
     'opendata': get_opendata_filtered_dfs,
-    'atd': get_atd_filtered_dfs
+    'atd': get_atd_dfs
 }
