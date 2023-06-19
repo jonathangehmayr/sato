@@ -145,6 +145,8 @@ input_dim_dict = {"char": 960,
                           "word": 200,
                           "par": 400,
                           "rest": 27} 
+
+# output sizes of different features, why not equal size?
 embedding_dim_dict = {"char": 300,
                           "word": 200,
                           "par": 400,

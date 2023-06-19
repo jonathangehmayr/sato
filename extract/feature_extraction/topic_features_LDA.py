@@ -17,7 +17,8 @@ model_loc = join(os.environ['BASEPATH'], 'topic_model', "LDA_cache", TYPENAME)
 LDA = LdaModel.load(join(model_loc,'model_{}'.format(LDA_name)))
 Dic = Dictionary.load(join(model_loc,'dictionary_{}'.format(LDA_name)))
 
-
+n_samples = 1000
+seed=0
 
 def get_table_topic(df, lda, common_dict, model_name):
     # get topic vector for table
@@ -33,10 +34,20 @@ def get_table_topic(df, lda, common_dict, model_name):
 
 
 
-def extract_topic_features(df_dic):
+def extract_topic_features(df_dic, sample=True):
 
     df, locator, dataset_id = df_dic['df'], df_dic['locator'], df_dic['dataset_id']
     table_features = OrderedDict()
+
+    if sample:
+        # sample if more than 1000 values in column
+        n_values=len(df)
+        if n_values > n_samples:
+            n_values = n_samples
+        df=df\
+            .sample(n_values, random_state=seed) \
+            .reset_index(drop=True) \
+            .astype(str)
 
     try:
         vec_LDA = get_table_topic(df, LDA, Dic, LDA_name)

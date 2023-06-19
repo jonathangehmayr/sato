@@ -25,7 +25,7 @@ def extract_sherlock_features(df_dic):
 
 
     for field_order, field_name in enumerate(df.columns):
-        v = df[field_name]
+        v = df[field_name].reset_index(drop=True)
 
         field_id = field_order
         all_field_features[field_order]['locator'] = locator
@@ -35,30 +35,30 @@ def extract_sherlock_features(df_dic):
         all_field_features[field_order]['header_c'] = utils.canonical_header(field_name)
         n_values = len(v)
 
+        #try:
         try:
-            try:
-                field_values = list(v[:v.last_valid_index()])
-            except Exception as e:
-                field_values = v
-                continue
-            # sample if more than 1000 values in column
-            if n_values > n_samples:
-                n_values = n_samples
-                v = random.choices(v, k=n_values)
-            raw_sample = pd.Series(v).astype(str)
-
-            f_ch = extract_bag_of_characters_features(raw_sample, n_values)
-            f_word = extract_word_embeddings_features(raw_sample)
-            f_par = infer_paragraph_embeddings_features(raw_sample, vec_dim)
-            f_stat = extract_bag_of_words_features(raw_sample)
-            for feature_set in [ f_ch, f_word, f_par, f_stat ]:
-                for k, v in feature_set.items():
-                    all_field_features[field_order][k] = v
-
-
+            field_values = list(v[:v.last_valid_index()])
         except Exception as e:
-            print('Single field exception:', e)
+            field_values = v
             continue
+        # sample if more than 1000 values in column
+        if n_values > n_samples:
+            n_values = n_samples
+            v = random.choices(v, k=n_values)
+        raw_sample = pd.Series(v).astype(str)
+
+        f_ch = extract_bag_of_characters_features(raw_sample, n_values)
+        f_word = extract_word_embeddings_features(raw_sample)
+        f_par = infer_paragraph_embeddings_features(raw_sample, vec_dim)
+        f_stat = extract_bag_of_words_features(raw_sample)
+        for feature_set in [ f_ch, f_word, f_par, f_stat ]:
+            for k, v in feature_set.items():
+                all_field_features[field_order][k] = v
+
+
+        #except Exception as e:
+        #    print('Single field exception:', e)
+        #    continue
 
 
     return pd.DataFrame(all_field_features)

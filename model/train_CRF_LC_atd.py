@@ -272,12 +272,14 @@ for corpus in corpus_list:
     print(len(train_ids), len(test_ids))
 
 
-    whole_corpus = datasets.TableFeatures(corpus,
-                                            sherlock_feature_groups, 
-                                            topic_feature=topic, 
-                                            label_enc=label_enc, 
-                                            id_filter=None,
-                                            max_col_count=MAX_COL_COUNT)
+    whole_corpus = datasets.TableFeatures(
+        corpus,
+        sherlock_feature_groups, 
+        topic_feature=topic, 
+        label_enc=label_enc, 
+        id_filter=None,
+        max_col_count=MAX_COL_COUNT
+    )
 
     if args.mode!='eval':
         train = copy.copy(whole_corpus).set_filter(train_ids)

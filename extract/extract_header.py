@@ -140,7 +140,7 @@ header_iter = itertools.islice(header_iter, start, None, None)
 print("Start from number {}".format(start))
 
 
-header_name = '{}-p{}_{}_header_valid.csv'.format(corpus, 1, TYPENAME)
+header_name = '{}_p{}_{}_header_valid.csv'.format(corpus, 1, TYPENAME)
 header_file_name = join(header_path, header_name)
 if not args.overwrite:
     assert not os.path.isfile(header_file_name), "\n \n {} already exists".format(header_file_name)

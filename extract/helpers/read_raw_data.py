@@ -472,8 +472,7 @@ def get_plotly_filtered_dfs(header_iter, limit=None, exact_num_fields=None, min_
 
 
 
-
-def get_atd_dfs():
+def get_atd_filtered_dfs(header_iter):
     os.chdir('../automatic-task-discovery')
     sys.path.append('../automatic-task-discovery')
     from src import load_metadata, process_csv_file_sato
@@ -486,7 +485,17 @@ def get_atd_dfs():
     cwd = os.getcwd()
     read_path_csv="csv_data_full/"
     dict_metadata=load_metadata()
-    for idx, (key, value) in enumerate(dict_metadata.items()):
+
+    for next_line in header_iter:
+        if next_line == 'EOF':
+            return
+        idx, row = next_line
+        locator = row['locator']
+        key = row['dataset_id']
+        fields = eval(row['field_list']) #convert string to list
+        #full_dataset_path = join(base_dir, locator, dataset_id)
+
+    #for idx, (key, value) in enumerate(dict_metadata.items()):
         print(idx,key)
         # check that dataset is not eda only
         with open("data/labels/" + key + ".json") as f:
@@ -549,5 +558,5 @@ get_filtered_dfs_by_corpus = {
     'manyeyes': get_manyeyes_filtered_dfs,
     'webtables': get_webtables_filterd_dfs,
     'opendata': get_opendata_filtered_dfs,
-    'atd': get_atd_dfs
+    'atd': get_atd_filtered_dfs
 }

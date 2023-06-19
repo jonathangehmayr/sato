@@ -16,9 +16,9 @@ import functools
 from helpers.read_raw_data import get_filtered_dfs_by_corpus
 from helpers.utils import valid_header_iter_gen, count_length_gen
 
-sys.path.append('../')
+sys.path.append('/home/jonathangehmayr/sato/')
 from utils import get_valid_types, str_or_none, str2bool
-sys.path.append('/scripts')
+sys.path.append('/home/jonathangehmayr/sato/scripts')
 
 # Get rid of gensim deprecated warning
 if not sys.warnoptions:
@@ -35,14 +35,14 @@ if __name__ == "__main__":
 
 
     MAX_FIELDS = 10000
-    cache_size = 100
+    cache_size = 10000
 
     # Get corpus
     parser = argparse.ArgumentParser()
     parser.add_argument('--corpus', default='atd', type=str, required=False)
-    parser.add_argument('-f', '--features', type=str, nargs='?', default='sherlock', choices=['sherlock', 'topic'], required=False)
+    parser.add_argument('-f', '--features', type=str, nargs='?', default='topic', choices=['sherlock', 'topic'], required=False)
     parser.add_argument('-LDA', '--LDA_name', nargs='?', type=str_or_none, default="num-directstr_thr-0_tn-400", required=False)
-    parser.add_argument('-n', '--num_processes', nargs='?', type=int, default=4, required=False)
+    parser.add_argument('-n', '--num_processes', nargs='?', type=int, default=1, required=False)
     parser.add_argument('-o', '--overwrite', nargs='?', type=str2bool, default=True, required=False)
 
     args = parser.parse_args()
@@ -90,8 +90,7 @@ if __name__ == "__main__":
         wcorpus, partition = corpus.split('-')
         raw_df_iter = get_filtered_dfs_by_corpus['webtables'](wcorpus, header_iter)
     else:
-        raw_df_iter = get_filtered_dfs_by_corpus[corpus](header_iter)
-
+        raw_df_iter = get_filtered_dfs_by_corpus[corpus](header_iter)  
 
     header_length = count_length_gen(os.path.join(valid_header_dir, header_name)) - 1
     print("Header Length", header_length) 
