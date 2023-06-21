@@ -7,7 +7,7 @@ from sherlock.features.bag_of_characters import extract_bag_of_characters_featur
 from sherlock.features.bag_of_words      import extract_bag_of_words_features
 from sherlock.features.word_embeddings   import extract_word_embeddings_features
 from sherlock.features.paragraph_vectors import infer_paragraph_embeddings_features
-
+from sherlock.features.col_name_word_embedding import extract_col_name_word_embeddings_features
 
 
 n_samples = 1000
@@ -51,7 +51,11 @@ def extract_sherlock_features(df_dic):
         f_word = extract_word_embeddings_features(raw_sample)
         f_par = infer_paragraph_embeddings_features(raw_sample, vec_dim)
         f_stat = extract_bag_of_words_features(raw_sample)
-        for feature_set in [ f_ch, f_word, f_par, f_stat ]:
+
+        # added
+        f_name= extract_col_name_word_embeddings_features(field_name)
+
+        for feature_set in [ f_ch, f_word, f_par, f_stat, f_name]:
             for k, v in feature_set.items():
                 all_field_features[field_order][k] = v
 

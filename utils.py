@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import numpy as np
 import torch 
+from collections import Counter
 
 def str2bool(v):
     # convert string to boolean type for argparser input
@@ -105,3 +106,27 @@ def logDot(a, b):
     C += max_a + max_b
 
     return C
+
+# https://datascience.stackexchange.com/questions/48369/what-loss-function-to-use-for-imbalanced-classes-using-pytorch
+def calculate_class_weights(header_path,tmp_path,corpus,TYPENAME):
+    labels= get_labels(header_path,tmp_path,corpus,TYPENAME)
+    class_weights = {}
+    total_samples = len(labels)
+
+    # Count the frequency of each class in the dataset
+    class_counts = Counter(labels)
+
+    min_key = min(class_counts, key=class_counts.get)
+    n_min = class_counts[min_key]
+    for class_label, count in class_counts.items():
+        class_weights[class_label]=(n_min / count)
+
+    sorted_class_weights=[class_weights[key] for key in sorted(class_weights.keys())]
+    return sorted_class_weights
+
+def get_labels(header_path,tmp_path,corpus,TYPENAME):
+    df_header = load_tmp_df(header_path, tmp_path, "{}_p{}_{}_header_valid".format(corpus, 1,TYPENAME), table=True)
+    list_labels = np.concatenate([eval(x) for x in list(df_header.field_names)]).tolist()
+    return list_labels
+
+

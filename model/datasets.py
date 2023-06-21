@@ -14,9 +14,8 @@ from os.path import join
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-sys.path.append('../')
 from utils import  name2dic, get_valid_types, load_tmp_df
-sys.path.append('/model')
+
 
 # global dataset settings
 EMBEDDING_FILL= 0.0
@@ -31,7 +30,7 @@ feature_path = join(os.environ['BASEPATH'], 'extract', 'out', 'features', TYPENA
 
 # load column headers
 feature_group_cols = {}
-sherlock_feature_groups = ['char', 'word', 'par', 'rest']
+sherlock_feature_groups = ['char', 'word', 'par', 'rest', 'name']
 other_feature_groups = ['topic']
 for f_g in sherlock_feature_groups + other_feature_groups:
     feature_group_cols[f_g] = list(pd.read_csv(join(os.environ['BASEPATH'],
@@ -116,7 +115,7 @@ class TableFeatures(Dataset):
         self.label_enc = label_enc
         self.max_col_count = max_col_count
         
-        self.df_header = load_tmp_df(header_path, tmp_path, '{}_{}_header_valid'.format(corpus,TYPENAME), table=True)
+        self.df_header = load_tmp_df(header_path, tmp_path, "{}_p{}_{}_header_valid".format(corpus, 1,TYPENAME), table=True)
 
         # filter training/testing sets
         # filtering won't affect the pickled file used or the dictionary loaded
@@ -201,9 +200,11 @@ class TableFeatures(Dataset):
             pad = (0,0,0, self.max_col_count - col_count)
             new_col_count = self.max_col_count
         else:
+            # TODO adapt to correctly pad table batches
             mask = torch.zeros(len(labels)) # need to be a tensor for batch generation
             pad = None
             new_col_count = len(labels)
+
 
             
         if len(self.sherlock_features) > 0:
@@ -228,7 +229,6 @@ class TableFeatures(Dataset):
             except Exception as e:
                 print("Exception topic feature", e)
                 features_dic['topic'] = torch.full((new_col_count, self.topic_no), 1.0/self.topic_no, dtype=torch.float)
-
 
         return features_dic, np.pad(self.label_enc.transform(labels), (0, new_col_count - len(labels)), 'constant', constant_values=(-1,-1)) , mask
 

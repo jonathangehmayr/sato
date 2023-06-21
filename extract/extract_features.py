@@ -16,9 +16,7 @@ import functools
 from helpers.read_raw_data import get_filtered_dfs_by_corpus
 from helpers.utils import valid_header_iter_gen, count_length_gen
 
-sys.path.append('/home/jonathangehmayr/sato/')
 from utils import get_valid_types, str_or_none, str2bool
-sys.path.append('/home/jonathangehmayr/sato/scripts')
 
 # Get rid of gensim deprecated warning
 if not sys.warnoptions:
@@ -40,7 +38,7 @@ if __name__ == "__main__":
     # Get corpus
     parser = argparse.ArgumentParser()
     parser.add_argument('--corpus', default='atd', type=str, required=False)
-    parser.add_argument('-f', '--features', type=str, nargs='?', default='topic', choices=['sherlock', 'topic'], required=False)
+    parser.add_argument('-f', '--features', type=str, nargs='?', default='sherlock', choices=['sherlock', 'topic'], required=False)
     parser.add_argument('-LDA', '--LDA_name', nargs='?', type=str_or_none, default="num-directstr_thr-0_tn-400", required=False)
     parser.add_argument('-n', '--num_processes', nargs='?', type=int, default=1, required=False)
     parser.add_argument('-o', '--overwrite', nargs='?', type=str2bool, default=True, required=False)
@@ -102,7 +100,8 @@ if __name__ == "__main__":
     
 
     counter = 0
-    header, mode = True, 'w'
+    header, mode = False, 'a'
+    #header, mode = True, 'w'
     col_counter = 0
     cache = []
     os.chdir('../automatic-task-discovery')

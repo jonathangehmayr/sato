@@ -141,16 +141,22 @@ class SherlockClassifier(nn.Module):
 
 
 
-input_dim_dict = {"char": 960,
-                          "word": 200,
-                          "par": 400,
-                          "rest": 27} 
+input_dim_dict = {
+    "char": 960,
+    "word": 200,
+    "par": 400,
+    "rest": 27,
+    "name":50
+} 
 
 # output sizes of different features, why not equal size?
-embedding_dim_dict = {"char": 300,
-                          "word": 200,
-                          "par": 400,
-                          "rest": 27} # Dummy. Does not matter as long as skip_conversion is ON
+embedding_dim_dict = {
+    "char": 300,
+    "word": 200,
+    "par": 400,
+    "rest": 27,  # Dummy. Does not matter as long as skip_conversion is ON
+    "name": 50
+} 
 
 def build_sherlock(arg_feature_groups, num_classes, topic_dim=None, dropout_ratio=0.5):
     # convinient function to build a sherlock instance 

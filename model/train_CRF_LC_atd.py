@@ -16,8 +16,6 @@ import torch.optim as optim
 from torch.utils.data import ConcatDataset
 from sklearn.preprocessing import LabelEncoder
 
-#from model import models_sherlock, datasets
-import models_sherlock, datasets
 
 from tensorboardX import SummaryWriter
 from sklearn.metrics import classification_report
@@ -26,11 +24,15 @@ from torchcrf import CRF
 import configargparse
 import copy
 # setting path
-sys.path.append('../')
+#print(os.getcwd())
+#sys.path.append('../')
+#os.chdir("/home/jonathangehmayr/sato/")
+import models_sherlock, datasets
 from utils import get_valid_types, str2bool, str_or_none, name2dic
-sys.path.append('/model')
+#sys.path.append('/model')
 # setting path
-#sys.path.append('../parentdirectory')
+#from model import models_sherlock, datasets
+
 
 
 #################### 
@@ -42,15 +44,16 @@ prng = np.random.RandomState(RANDSEED)
 #################### 
 # Load configs
 #################### 
+default
 
 
 p = configargparse.ArgParser()
 #p.add('-c', '--config_file', required=True, is_config_file=True, help='config file path')
 
 # general configs
-p.add('--MAX_COL_COUNT', type=int, default=None, help='Max number of columns in a table (padding for batches)') # should work with None
-p.add('--table_batch_size', type=int, default=5, help='# of tables in a batch')
-p.add('--n_worker', type=int, default=4, help='# of workers for dataloader')
+p.add('--MAX_COL_COUNT', type=int, default=25, help='Max number of columns in a table (padding for batches)') # should work with None, with 20 got too much cols somewhere
+p.add('--table_batch_size', type=int, default=10, help='# of tables in a batch')
+p.add('--n_worker', type=int, default=1, help='# of workers for dataloader')
 p.add('--TYPENAME', type=str, help='Name of valid types', env_var='TYPENAME', default="atd")
 
 # NN configs, ignored in evaluation mode
@@ -61,11 +64,11 @@ p.add('--dropout_rate', type=float, default=0.35)
 p.add('--optimizer_type', type=str, default='adam')
 
 # sherlock configs
-p.add('--sherlock_feature_groups', default=['char','rest','par','word'])
-p.add('--topic', type=str_or_none, default="num-directstr_thr-0_tn-400")
+p.add('--sherlock_feature_groups', default=['char','rest','par','word', 'name'])
+p.add('--topic', type=str_or_none, default="num-directstr_thr-0_tn-400")#None
 # could use pretrained sherlock_None.pt
 # was before None.pt but i guess should be all_None.pt
-p.add('--pre_trained_sherlock_path', type=str, default='all_None.pt') 
+p.add('--pre_trained_sherlock_path', type=str, default='sherlock_model_crpwnt.pt') 
 p.add('--fixed_sherlock_params', type=str2bool, default=False)
 
 # exp configs
@@ -120,7 +123,16 @@ shuffle_seed = 10
 
 
 #config_name = os.path.split(args.config_file)[-1].split('.')[0]
-config_name="base_config"
+features=""
+for f in sherlock_feature_groups:
+    features+=f[0]
+if topic:
+    features+="t"
+
+config_name="sato_model"
+
+logging_name = '{}_{}'.format(config_name, features)
+pre_trained_sherlock_path="sherlock_model_{}.pt".format(features)
 
 cross_validation = args.cross_validation
 
@@ -174,7 +186,7 @@ DTString = '-'.join([str(x) for x in currentDT.timetuple()[:5]])
 logging_base = 'CRF_log' #if device == torch.device('cpu') else 'CRF_cuda_log'
 #logging_path = join(os.environ['BASEPATH'],'results', logging_base, TYPENAME, '{}_{}_{}'.format(config_name, args.comment, DTString))
 
-logging_name = '{}_{}'.format(config_name, args.comment)
+#logging_name = '{}_{}'.format(config_name, args.comment)
 
 if cross_validation:
     cv_n, cv_k = cross_validation.split('-')
@@ -183,11 +195,7 @@ if cross_validation:
     print('Conducting cross validation, current {}th experiment in {}-fold CV'.format(cv_k, cv_n))
 
     logging_name = logging_name + '_' + cross_validation
-if args.multi_col_only:
-    logging_name = logging_name + '_multi-col'
 
-if args.multi_col_eval:
-    logging_name = logging_name + '_multi-col-eval'
 
 logging_path = join(os.environ['BASEPATH'],'results', logging_base, TYPENAME, logging_name)
 
@@ -308,7 +316,7 @@ model = CRF(len(valid_types) , batch_first=True).to(device)
 ####################
 if args.mode == 'train':
 
-
+    print(pre_trained_sherlock_loc, pre_trained_sherlock_path)
     classifier.load_state_dict(torch.load(join(pre_trained_sherlock_loc, pre_trained_sherlock_path), map_location=device))
 
     # Set initial transition parameters
@@ -503,13 +511,15 @@ if args.mode == 'train':
     if not os.path.exists(pre_trained_loc):
             os.makedirs(pre_trained_loc)
 
-    pretrained_name = '{}_{}.pt'.format(config_name, args.comment) if args.train_percent == 'train' else\
-                  '{}_{}_{}.pt'.format(config_name, args.comment, args.train_percent)
+    pretrained_name = '{}.pt'.format(logging_name) if args.train_percent == 'train' else\
+                  '{}_{}.pt'.format(logging_name, args.train_percent)
+    
+    #pretrained_name = '{}_{}.pt'.format(config_name, args.comment) if args.train_percent == 'train' else\
+    #              '{}_{}_{}.pt'.format(config_name, args.comment, args.train_percent)
 
     torch.save({'col_classifier': classifier.state_dict() ,
                 'CRF_model': model.state_dict()}
-                ,join(pre_trained_loc, pretrained_name))
-                      
+                ,join(pre_trained_loc, pretrained_name))        
 
     writer.close()
 

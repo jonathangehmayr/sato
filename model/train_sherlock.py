@@ -16,6 +16,7 @@ from tensorboardX import SummaryWriter
 import datasets
 from models_sherlock import FeatureEncoder, SherlockClassifier, build_sherlock
 from sklearn.metrics import classification_report
+from utils import calculate_class_weights
 
 # =============
 import torch
@@ -36,27 +37,27 @@ if __name__ == "__main__":
     # Load configs
     #################### 
     p = configargparse.ArgParser()
-    p.add('-c', '--config_file', required=True, is_config_file=True, help='config file path')
+    #p.add('-c', '--config_file', required=True, is_config_file=True, help='config file path')
 
     # general configs
     p.add('--n_worker', type=int, default=4, help='# of workers for dataloader')
     p.add('--TYPENAME', type=str, help='Name of valid types', env_var='TYPENAME')
 
     # NN configs
-    p.add('--epochs', type=int, default=100)
-    p.add('--learning_rate', type=float, default=1e-4)
+    p.add('--epochs', type=int, default=3) #100
+    p.add('--learning_rate', type=float, default=1e-4) #1e-4
     p.add('--decay', type=float, default=1e-4)
-    p.add('--dropout_rate', type=float, default=0.35)
-    p.add('--batch_size', type=int, default=256, help='# of col in a batch')
+    p.add('--dropout_rate', type=float, default=0.2) #0.35
+    p.add('--batch_size', type=int, default=5, help='# of col in a batch')
     p.add('--patience', type=int, default=100, help='patience for early stopping')
 
     # sherlock configs
-    p.add('--sherlock_feature_groups', nargs='+', default=['char','rest','par','word'])
-    p.add('--topic', type=str_or_none, default=None)
+    p.add('--sherlock_feature_groups', nargs='+', default=['char','rest','par','word', 'name'])
+    p.add('--topic', type=str_or_none, default="num-directstr_thr-0_tn-400")
 
     # exp configs
-    p.add('--corpus_list', nargs='+', default=['webtables1-p1', 'webtables2-p1'])
-    p.add('--multi_col_only', type=str2bool, default=False, help='filtering only the tables with multiple columns')
+    p.add('--corpus_list', nargs='+', default=['atd'])
+    p.add('--multi_col_only', type=str2bool, default=True, help='filtering only the tables with multiple columns')
     p.add('--mode', type=str, help='experiment mode', choices=['train', 'eval'], default='train')
     p.add('--model_list',  nargs='+', type=str, help='For eval mode only, load pretrained models')
     p.add('--train_percent', type=str, default='train', help='Training with only part of the data, post-fix in the train-split file.')
@@ -96,7 +97,16 @@ if __name__ == "__main__":
     corpus_list = args.corpus_list
     
 
-    config_name = os.path.split(args.config_file)[-1].split('.')[0]
+    #config_name = os.path.split(args.config_file)[-1].split('.')[0]
+    features=""
+    for f in sherlock_feature_groups:
+        features+=f[0]
+    if topic_name:
+        features+="t"
+
+    config_name="sherlock_model"
+
+    logging_name = '{}_{}'.format(config_name, features)
 
     #################### 
     # Preparations
@@ -110,15 +120,18 @@ if __name__ == "__main__":
         topic_dim = int(name2dic(topic_name)['tn'])
     else:
         topic_dim = None
-
+    
+    header_path = join(os.environ['BASEPATH'], 'extract', 'out', 'headers', TYPENAME)
+    feature_path = join(os.environ['BASEPATH'], 'extract', 'out', 'features', TYPENAME)
+    tmp_path = join(os.environ['BASEPATH'], 'tmp')
 
     # tensorboard logger
     currentDT = datetime.datetime.now()
     DTString = '-'.join([str(x) for x in currentDT.timetuple()[:5]])
     logging_base = 'sherlock_log' #if device == torch.device('cpu') else 'sherlock_cuda_log'
     #logging_path = join(os.environ['BASEPATH'],'results', logging_base, TYPENAME, '{}_{}_{}'.format(config_name, args.comment, DTString))
-    
-    logging_name = '{}_{}'.format(config_name, args.comment)
+
+    #logging_name = '{}_{}'.format(config_name, args.comment)
 
     if cross_validation:
         cv_n, cv_k = cross_validation.split('-')
@@ -127,11 +140,7 @@ if __name__ == "__main__":
         print('Conducting cross validation, current {}th experiment in {}-fold CV'.format(cv_k, cv_n))
 
         logging_name = logging_name + '_' + cross_validation
-    if args.multi_col_only:
-        logging_name = logging_name + '_multi-col'
 
-    if args.multi_col_eval:
-        logging_name = logging_name + '_multi-col-eval'
 
     logging_path = join(os.environ['BASEPATH'],'results', logging_base, TYPENAME, logging_name)
 
@@ -174,12 +183,14 @@ if __name__ == "__main__":
         print('data length:\n')        
         print(len(train_ids), len(test_ids))
         
-        whole_corpus = datasets.TableFeatures(corpus,
-                                                sherlock_feature_groups, 
-                                                topic_feature=topic_name, 
-                                                label_enc=label_enc, 
-                                                id_filter=None,
-                                                max_col_count=None)
+        whole_corpus = datasets.TableFeatures(
+            corpus,
+            sherlock_feature_groups, 
+            topic_feature=topic_name, 
+            label_enc=label_enc, 
+            id_filter=None,
+            max_col_count=None
+        )
 
         if args.mode!='eval':
             train = copy.copy(whole_corpus).set_filter(train_ids).to_col()
@@ -207,7 +218,9 @@ if __name__ == "__main__":
         dropout_ratio=dropout_ratio
         ).to(device)
     
-    loss_func = nn.CrossEntropyLoss().to(device)
+    weights=calculate_class_weights(header_path,tmp_path,corpus,TYPENAME)
+    #self.loss_fct = CrossEntropyLoss(ignore_index=-1, weights=torch.tensor(config.weights))
+    loss_func = nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor(weights)).to(device)
 
     if args.mode == 'train':
         writer = SummaryWriter(logging_path)
@@ -285,15 +298,15 @@ if __name__ == "__main__":
                     # Pred
                     pred = classifier(X)
 
-                    y_pred.extend(pred.cpu().numpy())
+                    # Calc accuracy
+                    _, pred_ids = torch.max(pred, 1)
+                    acc = (pred_ids == y).sum().item() / batch_size
+
+                    y_pred.extend(pred_ids.cpu().numpy())
                     y_true.extend(y.cpu().numpy())
 
                     # Calc loss
                     loss = loss_func(pred, y)
-
-                    # Calc accuracy
-                    _, pred_ids = torch.max(pred, 1)
-                    acc = (pred_ids == y).sum().item() / batch_size
 
                     running_val_loss += (loss - running_val_loss) / (batch_idx + 1)
                     running_val_acc += (acc - running_val_acc) / (batch_idx + 1)
@@ -307,11 +320,13 @@ if __name__ == "__main__":
                 os.makedirs(join(logging_path, "outputs"))
 
             # save prediction at each epoch
-            np.save(join(logging_path, "outputs", 'y_pred_epoch_{}.npy'.format(epoch_idx)), y_pred)
-            if epoch_idx == 0:
-                np.save(join(logging_path, "outputs", 'y_true.npy'), y_true)
+            list_pred=label_enc.inverse_transform(y_pred)
+            list_true=label_enc.inverse_transform(y_true)
 
-            
+            np.save(join(logging_path, "outputs", 'y_pred_epoch_{}.npy'.format(epoch_idx)), list_pred)
+            if epoch_idx == 0:
+                np.save(join(logging_path, "outputs", 'y_true.npy'), list_true)
+
             # Early stopping
             if best_val_loss is None or running_val_loss < best_val_loss:
                 best_val_loss = running_val_loss
@@ -344,6 +359,8 @@ if __name__ == "__main__":
         print("Training (with validation) ({} sec.)".format(int(end_time - start_time)))
         time_record['Train+validate'] = (end_time - start_time)
 
+        print(classification_report(list_true, list_pred))
+
 
     elif args.mode == 'eval':
         start_time = time()
@@ -368,18 +385,18 @@ if __name__ == "__main__":
                     y = batch_dict["label"]
                     X = batch_dict["data"]
 
-                    # Pred
+                   # Pred
                     pred = classifier(X)
-
-                    y_pred.extend(pred.cpu().numpy())
-                    y_true.extend(y.cpu().numpy())
-
-                    # Calc loss
-                    loss = loss_func(pred, y)
 
                     # Calc accuracy
                     _, pred_ids = torch.max(pred, 1)
                     acc = (pred_ids == y).sum().item() / batch_size
+
+                    y_pred.extend(pred_ids.cpu().numpy())
+                    y_true.extend(y.cpu().numpy())
+
+                    # Calc loss
+                    loss = loss_func(pred, y)
 
                     running_val_loss += (loss - running_val_loss) / (batch_idx + 1)
                     running_val_acc += (acc - running_val_acc) / (batch_idx + 1)

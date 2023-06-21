@@ -21,7 +21,9 @@ def split_string_by_uppercase_and_special_characters(string):
     current_substring = ''
 
     for char in string:
-        if char.isupper() and current_substring == '':
+        if not char.isupper() and not char.islower() and not char in punctuation + ' ':
+            continue
+        elif char.isupper() and current_substring == '':
             current_substring += char
         elif char.islower() and current_substring == '':
             current_substring += char
